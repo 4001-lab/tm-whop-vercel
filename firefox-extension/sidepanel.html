@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Ticketmaster Multi-Login</title>
+  <style>
+    body { width: 350px; padding: 15px; font-family: Arial, sans-serif; }
+    textarea, button { width: 100%; margin: 8px 0; }
+    textarea { height: 120px; resize: vertical; }
+    button { padding: 10px; background: #2c7be5; color: white; border: none; cursor: pointer; }
+    button:disabled { background: #ccc; }
+    .status { margin-top: 15px; font-size: 0.9em; }
+    #startBtn { text-align: center; }
+    .auth-section { border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 15px; }
+    .user-info { background: #f0f8ff; padding: 10px; border-radius: 5px; margin: 10px 0; }
+    .hidden { display: none; }
+    #whopLoginBtn { background: #7c3aed; }
+    #logoutBtn { background: #dc2626; font-size: 12px; padding: 5px; }
+  </style>
+</head>
+<body>
+  <div class="auth-section">
+    <div id="loginSection">
+      <h3>Premium Access Required</h3>
+      <button id="whopLoginBtn">Login with Whop</button>
+      <div id="status" class="status"></div>
+    </div>
+    
+    <div id="userSection" class="hidden">
+      <div class="user-info">
+        <strong id="username"></strong>
+        <button id="logoutBtn">Logout</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="mainContent" class="hidden">
+    <h3>Event URLs (one per line)</h3>
+  <textarea id="eventUrls" placeholder="https://www.ticketmaster.com/event1
+https://www.ticketmaster.com/event2"></textarea>
+  
+  <h3>Proxy:Account:Password (one per line)</h3>
+  <textarea id="credentials" placeholder="proxy1:port user1 pass1
+proxy2:port user2 pass2"></textarea>
+  
+    <button id="startBtn">Start Login</button>
+  </div>
+  
+  <script src="sidepanel.js"></script>
+</body>
+</html>

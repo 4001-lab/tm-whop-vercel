@@ -1,0 +1,48 @@
+{
+  "manifest_version": 2,
+  "name": "Ticketmaster Multi-Account",
+  "version": "1.0.3",
+  "description": "Open multiple Ticketmaster accounts in separate tabs with unique proxies.",
+  "permissions": [
+    "tabs",
+    "proxy",
+    "contextualIdentities",
+    "cookies",
+    "webRequest",
+    "webRequestBlocking",
+    "storage",
+    "<all_urls>",
+    "https://*.vercel.app/*"
+  ],
+  
+  "background": {
+    "scripts": [
+      "background.js"
+    ],
+    "persistent": true
+  },
+  "browser_action": {
+    "default_title": "Ticketmaster Accounts"
+  },
+  "sidebar_action": {
+    "default_title": "Ticketmaster Accounts",
+    "default_panel": "sidepanel.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.auth.ticketmaster.com/*",
+        "*://*.ticketmaster.com/*"
+      ],
+      "js": [
+        "login.js"
+      ],
+      "run_at": "document_end"
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "strict_min_version": "91.1.0"
+    }
+  }
+}
