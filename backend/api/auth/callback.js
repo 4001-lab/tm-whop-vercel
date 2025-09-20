@@ -1,6 +1,11 @@
 import jwt from 'jsonwebtoken';
 import { WhopServerSdk } from '@whop/api';
-import { pool, initDatabase } from '../../lib/database.js';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY
+);
 
 const whopApi = WhopServerSdk({
   appApiKey: process.env.WHOP_API_KEY,
@@ -35,7 +40,7 @@ export default async function handler(req, res) {
   const { code, state } = req.query;
 
   try {
-    await initDatabase();
+    // Supabase tables should already exist
 
     const authResponse = await whopApi.oauth.exchangeCode({
       code,
@@ -77,25 +82,37 @@ export default async function handler(req, res) {
       hasActiveSubscription = false;
     }
 
-    await pool.query(`
-      INSERT INTO users (whop_user_id, email, username, subscription_status, access_token, updated_at)
-      VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
-      ON CONFLICT (whop_user_id) 
-      DO UPDATE SET 
-        email = $2, 
-        username = $3, 
-        subscription_status = $4, 
-        access_token = $5, 
-        updated_at = CURRENT_TIMESTAMP
-    `, [userId, userData.email, userData.username, hasActiveSubscription ? 'active' : 'inactive', access_token]);
+    const { error: upsertError } = await supabase
+      .from('users')
+      .upsert({
+        whop_user_id: userId,
+        email: userData.email,
+        username: userData.username,
+        subscription_status: hasActiveSubscription ? 'active' : 'inactive',
+        access_token: access_token,
+        updated_at: new Date().toISOString()
+      });
+    
+    if (upsertError) throw upsertError;
 
     if (hasActiveSubscription) {
       const sessionToken = jwt.sign({ userId: userId }, process.env.JWT_SECRET, { expiresIn: '24h' });
 
-      await pool.query(`
-        INSERT INTO sessions (user_id, session_token, expires_at)
-        SELECT id, $2, $3 FROM users WHERE whop_user_id = $1
-      `, [userId, sessionToken, new Date(Date.now() + 24 * 60 * 60 * 1000)]);
+      const { data: userData } = await supabase
+        .from('users')
+        .select('id')
+        .eq('whop_user_id', userId)
+        .single();
+      
+      const { error: sessionError } = await supabase
+        .from('sessions')
+        .insert({
+          user_id: userData.id,
+          session_token: sessionToken,
+          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+        });
+      
+      if (sessionError) throw sessionError;
 
       const sessionId = req.ip;
       setTempAuth(sessionId, {
