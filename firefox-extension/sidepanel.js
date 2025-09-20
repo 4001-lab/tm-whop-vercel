@@ -1,4 +1,4 @@
-const BACKEND_URL = 'https://vigilant-eureka-eta.vercel.app';
+const BACKEND_URL = 'https://tm-whop-vercel.vercel.app';
 
 // Global variable to track auth polling
 let authPolling = null;
@@ -23,7 +23,7 @@ async function checkAuthStatus() {
   
   if (sessionToken.sessionToken) {
     try {
-      const response = await fetch(`${BACKEND_URL}/api/verify-session`, {
+      const response = await fetch(`${BACKEND_URL}/api/verify-session.js`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -66,7 +66,7 @@ function showUnauthenticatedState() {
 // Whop OAuth login
 document.getElementById('whopLoginBtn').addEventListener('click', async () => {
   try {
-    const response = await fetch(`${BACKEND_URL}/api/auth/whop`);
+    const response = await fetch(`${BACKEND_URL}/api/auth/whop.js`);
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -100,7 +100,7 @@ function startAuthPolling() {
   authPolling = setInterval(async () => {
     try {
       // Check localStorage via a backend endpoint
-      const response = await fetch(`${BACKEND_URL}/api/check-status`, {
+      const response = await fetch(`${BACKEND_URL}/api/check-status.js`, {
         method: 'GET',
         credentials: 'include'
       });
@@ -114,7 +114,7 @@ function startAuthPolling() {
         document.getElementById('status').textContent = 'Login successful!';
         
         // Clear the backend storage
-        await fetch(`${BACKEND_URL}/api/check-status`, { 
+        await fetch(`${BACKEND_URL}/api/check-status.js`, { 
           method: 'POST',
           credentials: 'include'
         });
@@ -123,7 +123,7 @@ function startAuthPolling() {
         document.getElementById('status').textContent = `Error: ${result.error}`;
         
         // Clear the backend storage
-        await fetch(`${BACKEND_URL}/api/check-status`, { 
+        await fetch(`${BACKEND_URL}/api/check-status.js`, { 
           method: 'POST',
           credentials: 'include'
         });
@@ -148,7 +148,7 @@ document.getElementById('logoutBtn').addEventListener('click', async () => {
   
   if (sessionToken.sessionToken) {
     try {
-      await fetch(`${BACKEND_URL}/api/logout`, {
+      await fetch(`${BACKEND_URL}/api/logout.js`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
