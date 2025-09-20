@@ -1,14 +1,13 @@
 import { Pool } from 'pg';
 
 // Use connection string for Vercel environment
-import { Pool } from "pg";
-
+if (!process.env.POSTGRES_URL) {
+  throw new Error('POSTGRES_URL environment variable is not set');
+}
 const pool = new Pool({
-  connectionString: process.env.POSTGRES_URL
+  connectionString: process.env.POSTGRES_URL,
+  ssl: true
 });
-
-
-
 
 
 const initDatabase = async () => {
