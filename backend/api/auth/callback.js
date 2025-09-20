@@ -110,6 +110,13 @@ export default async function handler(req, res) {
       
       if (userFetchError) throw userFetchError;
       
+      // Delete all existing sessions for this user to enforce single session
+      await supabase
+        .from('sessions')
+        .delete()
+        .eq('user_id', userRecord.id);
+      
+      // Create new session
       const { error: sessionError } = await supabase
         .from('sessions')
         .insert({

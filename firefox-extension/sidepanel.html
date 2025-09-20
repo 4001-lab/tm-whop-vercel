@@ -1,31 +1,133 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset="utf-8">
   <title>Ticketmaster Multi-Login</title>
   <style>
-    body { width: 350px; padding: 15px; font-family: Arial, sans-serif; }
-    textarea, button { width: 100%; margin: 8px 0; }
-    textarea { height: 120px; resize: vertical; }
-    button { padding: 10px; background: #2c7be5; color: white; border: none; cursor: pointer; }
-    button:disabled { background: #ccc; }
-    .status { margin-top: 15px; font-size: 0.9em; }
-    #startBtn { text-align: center; }
-    .auth-section { border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 15px; }
-    .user-info { background: #f0f8ff; padding: 10px; border-radius: 5px; margin: 10px 0; }
-    .hidden { display: none; }
-    #whopLoginBtn { background: #7c3aed; }
-    #logoutBtn { background: #dc2626; font-size: 12px; padding: 5px; }
+    body {
+      width: 350px;
+      padding: 15px;
+      font-family: Arial, sans-serif;
+    }
+
+    textarea,
+    button {
+      width: 100%;
+      margin: 8px 0;
+    }
+
+    textarea {
+      height: 120px;
+      resize: vertical;
+    }
+
+    button {
+      padding: 10px;
+      background: #2c7be5;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      background: #ccc;
+    }
+
+    .status {
+      margin-top: 15px;
+      font-size: 0.9em;
+    }
+
+    #startBtn {
+      text-align: center;
+    }
+
+    .auth-section {
+      border-bottom: 1px solid #eee;
+      padding-bottom: 15px;
+      margin-bottom: 15px;
+    }
+
+    .user-info {
+      background: #f0f8ff;
+      padding: 10px;
+      border-radius: 5px;
+      margin: 10px 0;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    #loginSection {
+      text-align: center;
+      padding: 30px 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 12px;
+      color: white;
+      box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+    }
+
+    #loginSection h3 {
+      margin: 0 0 20px 0;
+      font-size: 18px;
+      font-weight: 600;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    #whopLoginBtn {
+      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(238, 90, 36, 0.4);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    #whopLoginBtn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(238, 90, 36, 0.6);
+      background: linear-gradient(135deg, #ff5252 0%, #d63031 100%);
+    }
+
+    #whopLoginBtn:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 10px rgba(238, 90, 36, 0.4);
+    }
+
+    #status {
+      margin-top: 15px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      font-size: 14px;
+      min-height: 20px;
+    }
+
+    #logoutBtn {
+      background: #dc2626;
+      font-size: 12px;
+      padding: 5px;
+    }
   </style>
 </head>
+
 <body>
   <div class="auth-section">
     <div id="loginSection">
-      <h3>Premium Access Required</h3>
-      <button id="whopLoginBtn">Login with Whop</button>
+      <h3>🎫 Premium Access Required</h3>
+      <button id="whopLoginBtn">🚀 Login with Whop</button>
       <div id="status" class="status"></div>
     </div>
-    
+
     <div id="userSection" class="hidden">
       <div class="user-info">
         <strong id="username"></strong>
@@ -36,16 +138,19 @@
 
   <div id="mainContent" class="hidden">
     <h3>Event URLs (one per line)</h3>
-  <textarea id="eventUrls" placeholder="https://www.ticketmaster.com/event1
-https://www.ticketmaster.com/event2"></textarea>
-  
-  <h3>Proxy:Account:Password (one per line)</h3>
-  <textarea id="credentials" placeholder="proxy1:port user1 pass1
-proxy2:port user2 pass2"></textarea>
-  
+    <textarea id="eventUrls" placeholder="https://www.ticketmaster.com/event1
+            https://www.ticketmaster.com/event2">
+    </textarea>
+
+    <h3>Proxy:Account:Password (one per line)</h3>
+    <textarea id="credentials" placeholder="proxy1:port user1 pass1
+      proxy2:port user2 pass2">
+    </textarea>
+
     <button id="startBtn">Start Login</button>
   </div>
-  
+
   <script src="sidepanel.js"></script>
 </body>
+
 </html>
