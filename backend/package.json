@@ -11,12 +11,12 @@
   },
   "dependencies": {
     "@whop/api": "^0.0.50",
+    "@supabase/supabase-js": "^2.39.0",
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
-    "jsonwebtoken": "^9.0.2",
-    "pg": "^8.11.3"
+    "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {
     "vercel": "^32.5.6"
