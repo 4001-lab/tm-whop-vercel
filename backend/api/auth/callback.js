@@ -1,7 +1,6 @@
-require('dotenv').config();
-const jwt = require('jsonwebtoken');
-const { WhopServerSdk } = require('@whop/api');
-const { pool, initDatabase } = require('../../lib/database');
+import jwt from 'jsonwebtoken';
+import { WhopServerSdk } from '@whop/api';
+import { pool, initDatabase } from '../../lib/database.js';
 
 const whopApi = WhopServerSdk({
   appApiKey: process.env.WHOP_API_KEY,
@@ -28,7 +27,7 @@ function setTempAuth(key, data) {
   tempAuthStorage.set(key, { ...data, expires: Date.now() + STORAGE_TTL });
 }
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }

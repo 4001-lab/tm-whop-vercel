@@ -1,4 +1,4 @@
-const { Pool } = require('pg');
+import { Pool } from 'pg';
 
 // Use connection string for Vercel environment
 const pool = new Pool({
@@ -49,4 +49,4 @@ const initDatabase = async () => {
   }
 };
 
-module.exports = { pool, initDatabase };
+export { pool, initDatabase };

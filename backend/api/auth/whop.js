@@ -1,7 +1,7 @@
-const { WhopServerSdk } = require('@whop/api');
-const authStorage = require('../../lib/auth-storage');
+import { WhopServerSdk } from '@whop/api';
+import authStorage from '../../lib/auth-storage.js';
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }

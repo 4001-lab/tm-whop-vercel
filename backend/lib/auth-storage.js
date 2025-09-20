@@ -1,4 +1,4 @@
-const { pool } = require('./database');
+import { pool } from './database.js';
 
 let lastCleanup = 0;
 const CLEANUP_INTERVAL = 5 * 60 * 1000; // 5 minutes
@@ -49,4 +49,4 @@ const authStorage = {
   }
 };
 
-module.exports = authStorage;
+export default authStorage;
