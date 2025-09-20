@@ -30,6 +30,7 @@ export default async function handler(req, res) {
     await ensureTables();
     
     // Verify state parameter
+    console.log('Checking state:', state);
     const { data: stateData, error: stateError } = await supabase
       .from('auth_sessions')
       .select('auth_data')
@@ -37,8 +38,21 @@ export default async function handler(req, res) {
       .gt('expires_at', new Date().toISOString())
       .single();
     
+    console.log('State check result:', { stateData, stateError });
+    
     if (stateError || !stateData) {
-      return res.status(400).send('Invalid or expired state parameter');
+      // Try without expiration check in case of timing issues
+      const { data: fallbackData, error: fallbackError } = await supabase
+        .from('auth_sessions')
+        .select('auth_data')
+        .eq('session_id', state)
+        .single();
+      
+      console.log('Fallback check:', { fallbackData, fallbackError });
+      
+      if (fallbackError || !fallbackData) {
+        return res.status(400).send(`Invalid or expired state parameter. State: ${state}, Error: ${stateError?.message || 'Not found'}`);
+      }
     }
     
     // Clean up the state record

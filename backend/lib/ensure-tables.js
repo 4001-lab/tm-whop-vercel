@@ -11,7 +11,8 @@ export async function ensureTables() {
   );
 
   try {
-    await supabase.rpc('exec_sql', {
+    // Try to create tables using direct SQL
+    const { error } = await supabase.rpc('exec_sql', {
       query: `
         CREATE TABLE IF NOT EXISTS users (
           id SERIAL PRIMARY KEY,
@@ -42,7 +43,12 @@ export async function ensureTables() {
       `
     });
 
-    tablesCreated = true;
+    if (error) {
+      console.error('Table creation error:', error);
+    } else {
+      console.log('Tables ensured successfully');
+      tablesCreated = true;
+    }
   } catch (error) {
     console.error('Table creation error:', error);
   }
