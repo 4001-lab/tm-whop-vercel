@@ -4,12 +4,12 @@ import { ensureTables } from '../../lib/ensure-tables.js';
 
 let supabase;
 try {
-  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     throw new Error('Missing Supabase environment variables');
   }
   supabase = createClient(
     process.env.SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_KEY
+    process.env.SUPABASE_SERVICE_ROLE_KEY
   );
 } catch (error) {
   console.error('Supabase initialization error:', error);
@@ -24,7 +24,7 @@ export default async function handler(req, res) {
     await ensureTables();
     
     // Validate required environment variables
-    if (!process.env.WHOP_API_KEY || !process.env.WHOP_APP_ID || !process.env.WHOP_REDIRECT_URI || !process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+    if (!process.env.WHOP_API_KEY || !process.env.WHOP_APP_ID || !process.env.WHOP_REDIRECT_URI || !process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
       return res.status(500).json({ error: 'Missing required environment variables' });
     }
 
