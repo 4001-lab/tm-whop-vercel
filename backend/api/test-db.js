@@ -1,6 +1,6 @@
-const { pool, initDatabase } = require('../lib/database');
+import { pool, initDatabase } from '../lib/database.js';
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   try {
     await initDatabase();
     const result = await pool.query('SELECT NOW() as current_time');

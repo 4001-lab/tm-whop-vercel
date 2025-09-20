@@ -19,7 +19,7 @@ function cleanupExpiredSessions() {
   }
 }
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   cleanupExpiredSessions();
   
   const sessionId = req.headers['x-session-id'] || req.ip;

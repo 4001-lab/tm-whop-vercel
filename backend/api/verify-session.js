@@ -1,11 +1,10 @@
-require('dotenv').config();
-const jwt = require('jsonwebtoken');
-const { pool, initDatabase } = require('../lib/database');
+import jwt from 'jsonwebtoken';
+import { pool, initDatabase } from '../lib/database.js';
 
 let lastCleanup = 0;
 const CLEANUP_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
