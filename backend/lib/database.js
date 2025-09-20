@@ -3,8 +3,9 @@ import { Pool } from 'pg';
 // Use connection string for Vercel environment
 const pool = new Pool({
   connectionString: process.env.POSTGRES_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  ssl: true
 });
+
 
 const initDatabase = async () => {
   try {
