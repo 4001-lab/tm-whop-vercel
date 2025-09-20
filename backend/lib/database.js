@@ -5,8 +5,8 @@ if (!process.env.POSTGRES_URL) {
   throw new Error('POSTGRES_URL environment variable is not set');
 }
 const pool = new Pool({
-  connectionString: process.env.POSTGRES_URL,
-  ssl: true
+  connectionString: process.env.POSTGRES_URL + '?sslmode=require',
+  ssl: false
 });
 
 
