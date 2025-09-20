@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { WhopServerSdk } from '@whop/api';
 import { createClient } from '@supabase/supabase-js';
+import { ensureTables } from '../../lib/ensure-tables.js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -12,25 +13,7 @@ const whopApi = WhopServerSdk({
   appId: process.env.WHOP_APP_ID,
 });
 
-// Temporary storage for auth status with TTL cleanup
-const tempAuthStorage = new Map();
-const STORAGE_TTL = 5 * 60 * 1000; // 5 minutes
 
-// Cleanup expired entries
-function cleanupExpiredEntries() {
-  const now = Date.now();
-  for (const [key, value] of tempAuthStorage.entries()) {
-    if (value.expires && now > value.expires) {
-      tempAuthStorage.delete(key);
-    }
-  }
-}
-
-// Set entry with expiration
-function setTempAuth(key, data) {
-  cleanupExpiredEntries();
-  tempAuthStorage.set(key, { ...data, expires: Date.now() + STORAGE_TTL });
-}
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -39,8 +22,30 @@ export default async function handler(req, res) {
 
   const { code, state } = req.query;
 
+  if (!code || !state) {
+    return res.status(400).send('Missing code or state parameter');
+  }
+
   try {
-    // Supabase tables should already exist
+    await ensureTables();
+    
+    // Verify state parameter
+    const { data: stateData, error: stateError } = await supabase
+      .from('auth_sessions')
+      .select('auth_data')
+      .eq('session_id', state)
+      .gt('expires_at', new Date().toISOString())
+      .single();
+    
+    if (stateError || !stateData) {
+      return res.status(400).send('Invalid or expired state parameter');
+    }
+    
+    // Clean up the state record
+    await supabase
+      .from('auth_sessions')
+      .delete()
+      .eq('session_id', state);
 
     const authResponse = await whopApi.oauth.exchangeCode({
       code,
@@ -98,27 +103,35 @@ export default async function handler(req, res) {
     if (hasActiveSubscription) {
       const sessionToken = jwt.sign({ userId: userId }, process.env.JWT_SECRET, { expiresIn: '24h' });
 
-      const { data: userData } = await supabase
+      const { data: userRecord, error: userFetchError } = await supabase
         .from('users')
         .select('id')
         .eq('whop_user_id', userId)
         .single();
       
+      if (userFetchError) throw userFetchError;
+      
       const { error: sessionError } = await supabase
         .from('sessions')
         .insert({
-          user_id: userData.id,
+          user_id: userRecord.id,
           session_token: sessionToken,
           expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
         });
       
       if (sessionError) throw sessionError;
 
-      const sessionId = req.ip;
-      setTempAuth(sessionId, {
-        sessionToken,
-        user: { id: userId, username: userData.username, email: userData.email }
-      });
+      const sessionId = req.ip || req.headers['x-forwarded-for'] || 'default';
+      await supabase
+        .from('auth_sessions')
+        .upsert({
+          session_id: sessionId,
+          auth_data: {
+            sessionToken,
+            user: { id: userId, username: userData.username, email: userData.email }
+          },
+          expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString()
+        });
       
       res.send(`
         <!DOCTYPE html>
@@ -136,10 +149,14 @@ export default async function handler(req, res) {
         </html>
       `);
     } else {
-      const sessionId = req.ip;
-      setTempAuth(sessionId, {
-        error: 'No active subscription found'
-      });
+      const sessionId = req.ip || req.headers['x-forwarded-for'] || 'default';
+      await supabase
+        .from('auth_sessions')
+        .upsert({
+          session_id: sessionId,
+          auth_data: { error: 'No active subscription found' },
+          expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString()
+        });
       
       res.send(`
         <!DOCTYPE html>
@@ -159,10 +176,14 @@ export default async function handler(req, res) {
     }
   } catch (error) {
     console.error('OAuth callback error:', error);
-    const sessionId = req.ip;
-    setTempAuth(sessionId, {
-      error: 'Authentication failed'
-    });
+    const sessionId = req.ip || req.headers['x-forwarded-for'] || 'default';
+    await supabase
+      .from('auth_sessions')
+      .upsert({
+        session_id: sessionId,
+        auth_data: { error: 'Authentication failed' },
+        expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString()
+      });
     
     res.send(`
       <!DOCTYPE html>

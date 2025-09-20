@@ -1,5 +1,10 @@
 import jwt from 'jsonwebtoken';
-import { pool, initDatabase } from '../lib/database.js';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY
+);
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -11,19 +16,23 @@ export default async function handler(req, res) {
   const { sessionToken, eventUrls, credentials } = req.body;
 
   try {
-    await initDatabase();
-    
     // Verify session first
     jwt.verify(sessionToken, process.env.JWT_SECRET);
 
-    const sessionResult = await pool.query(`
-      SELECT s.*, u.subscription_status, u.whop_user_id
-      FROM sessions s
-      JOIN users u ON s.user_id = u.id
-      WHERE s.session_token = $1 AND s.expires_at > CURRENT_TIMESTAMP
-    `, [sessionToken]);
+    const { data: sessionData, error: sessionError } = await supabase
+      .from('sessions')
+      .select(`
+        *,
+        users!inner(
+          subscription_status,
+          whop_user_id
+        )
+      `)
+      .eq('session_token', sessionToken)
+      .gt('expires_at', new Date().toISOString())
+      .single();
 
-    if (sessionResult.rows.length === 0 || sessionResult.rows[0].subscription_status !== 'active') {
+    if (sessionError || !sessionData || sessionData.users.subscription_status !== 'active') {
       return res.status(403).json({ error: 'Unauthorized access' });
     }
 
@@ -36,7 +45,7 @@ export default async function handler(req, res) {
     const processedData = {
       eventUrls: eventUrls.filter(url => url.trim() !== ''),
       credentials: credentials.filter(cred => cred.trim() !== '').map(line => line.split(/\s+/)),
-      userId: sessionResult.rows[0].whop_user_id
+      userId: sessionData.users.whop_user_id
     };
 
     res.json({ success: true, data: processedData });

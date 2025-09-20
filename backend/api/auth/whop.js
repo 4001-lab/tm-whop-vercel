@@ -1,5 +1,11 @@
 import { WhopServerSdk } from '@whop/api';
-import authStorage from '../../lib/auth-storage.js';
+import { createClient } from '@supabase/supabase-js';
+import { ensureTables } from '../../lib/ensure-tables.js';
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY
+);
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -7,6 +13,8 @@ export default async function handler(req, res) {
   }
 
   try {
+    await ensureTables();
+    
     // Validate required environment variables
     if (!process.env.WHOP_API_KEY || !process.env.WHOP_APP_ID || !process.env.WHOP_REDIRECT_URI) {
       return res.status(500).json({ error: 'Missing required environment variables' });
@@ -23,7 +31,13 @@ export default async function handler(req, res) {
     });
 
     // Store state for later verification
-    await authStorage.set(state, { status: 'pending' });
+    await supabase
+      .from('auth_sessions')
+      .upsert({
+        session_id: state,
+        auth_data: { status: 'pending' },
+        expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString()
+      });
 
     res.json({ authUrl: url, state });
   } catch (error) {

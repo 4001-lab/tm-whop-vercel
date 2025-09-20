@@ -1,39 +1,40 @@
-// Temporary storage for auth status with expiration
-const tempAuthStorage = new Map();
-const MAX_SESSIONS = 1000;
-const SESSION_TIMEOUT = 10 * 60 * 1000; // 10 minutes
+import { createClient } from '@supabase/supabase-js';
+import { ensureTables } from '../lib/ensure-tables.js';
 
-function cleanupExpiredSessions() {
-  const now = Date.now();
-  for (const [sessionId, data] of tempAuthStorage) {
-    if (data.timestamp && now - data.timestamp > SESSION_TIMEOUT) {
-      tempAuthStorage.delete(sessionId);
-    }
-  }
-  
-  // Enforce size limit
-  if (tempAuthStorage.size > MAX_SESSIONS) {
-    const entries = Array.from(tempAuthStorage.entries());
-    const toDelete = entries.slice(0, entries.length - MAX_SESSIONS);
-    toDelete.forEach(([sessionId]) => tempAuthStorage.delete(sessionId));
-  }
-}
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY
+);
 
 export default async function handler(req, res) {
-  cleanupExpiredSessions();
-  
-  const sessionId = req.headers['x-session-id'] || req.ip;
+  const sessionId = req.headers['x-session-id'] || req.ip || req.headers['x-forwarded-for'] || 'default';
   
   if (req.method === 'GET') {
-    const authData = tempAuthStorage.get(sessionId);
-    if (authData) {
-      const { timestamp, ...data } = authData;
-      res.json(data);
+    await ensureTables();
+    
+    // Clean up expired sessions
+    await supabase
+      .from('auth_sessions')
+      .delete()
+      .lt('expires_at', new Date().toISOString());
+    
+    const { data: authData, error } = await supabase
+      .from('auth_sessions')
+      .select('auth_data')
+      .eq('session_id', sessionId)
+      .gt('expires_at', new Date().toISOString())
+      .single();
+    
+    if (authData && !error) {
+      res.json(authData.auth_data);
     } else {
       res.json({ status: 'pending' });
     }
   } else if (req.method === 'POST') {
-    tempAuthStorage.delete(sessionId);
+    await supabase
+      .from('auth_sessions')
+      .delete()
+      .eq('session_id', sessionId);
     res.json({ success: true });
   } else {
     res.status(405).json({ error: 'Method not allowed' });

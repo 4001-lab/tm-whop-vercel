@@ -1,5 +1,11 @@
 import jwt from 'jsonwebtoken';
-import { pool, initDatabase } from '../lib/database.js';
+import { createClient } from '@supabase/supabase-js';
+import { ensureTables } from '../lib/ensure-tables.js';
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY
+);
 
 let lastCleanup = 0;
 const CLEANUP_INTERVAL = 5 * 60 * 1000; // 5 minutes
@@ -20,39 +26,49 @@ export default async function handler(req, res) {
   }
 
   try {
-    await initDatabase();
+    await ensureTables();
     
-    // Only run cleanup every 5 minutes
+    // Cleanup expired sessions
     const now = Date.now();
     if (now - lastCleanup > CLEANUP_INTERVAL) {
-      await pool.query('DELETE FROM sessions WHERE expires_at < CURRENT_TIMESTAMP');
+      await supabase
+        .from('sessions')
+        .delete()
+        .lt('expires_at', new Date().toISOString());
       lastCleanup = now;
     }
     
     const decoded = jwt.verify(sessionToken, process.env.JWT_SECRET);
 
-    const sessionResult = await pool.query(`
-      SELECT s.*, u.subscription_status, u.whop_user_id, u.username
-      FROM sessions s
-      JOIN users u ON s.user_id = u.id
-      WHERE s.session_token = $1 AND s.expires_at > CURRENT_TIMESTAMP
-    `, [sessionToken]);
+    const { data: sessions, error: sessionError } = await supabase
+      .from('sessions')
+      .select(`
+        *,
+        users!inner(
+          subscription_status,
+          whop_user_id,
+          username
+        )
+      `)
+      .eq('session_token', sessionToken)
+      .gt('expires_at', new Date().toISOString())
+      .single();
 
-    if (sessionResult.rows.length === 0) {
+    if (sessionError || !sessions) {
       return res.status(401).json({ valid: false, error: 'Invalid or expired session' });
     }
 
-    const session = sessionResult.rows[0];
+    const session = { ...sessions, ...sessions.users };
 
     if (session.subscription_status !== 'active') {
       return res.status(403).json({ valid: false, error: 'Subscription not active' });
     }
 
-    await pool.query(`
-      DELETE FROM sessions 
-      WHERE user_id = (SELECT user_id FROM sessions WHERE session_token = $1) 
-      AND session_token != $1
-    `, [sessionToken]);
+    await supabase
+      .from('sessions')
+      .delete()
+      .eq('user_id', sessions.user_id)
+      .neq('session_token', sessionToken);
 
     res.json({
       valid: true,

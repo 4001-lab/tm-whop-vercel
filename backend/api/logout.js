@@ -1,5 +1,10 @@
 import jwt from 'jsonwebtoken';
-import { pool, initDatabase } from '../lib/database.js';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY
+);
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -9,12 +14,13 @@ export default async function handler(req, res) {
   const { sessionToken } = req.body;
 
   try {
-    await initDatabase();
-    
     if (sessionToken) {
       const decoded = jwt.verify(sessionToken, process.env.JWT_SECRET);
       
-      await pool.query('DELETE FROM sessions WHERE session_token = $1', [sessionToken]);
+      await supabase
+        .from('sessions')
+        .delete()
+        .eq('session_token', sessionToken);
     }
 
     res.json({ success: true });
