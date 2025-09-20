@@ -1,6 +1,5 @@
 import jwt from 'jsonwebtoken';
 import { createClient } from '@supabase/supabase-js';
-import { ensureTables } from '../lib/ensure-tables.js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -26,8 +25,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    await ensureTables();
-    
     // Cleanup expired sessions
     const now = Date.now();
     if (now - lastCleanup > CLEANUP_INTERVAL) {

@@ -1,6 +1,5 @@
 import { WhopServerSdk } from '@whop/api';
 import { createClient } from '@supabase/supabase-js';
-import { ensureTables } from '../../lib/ensure-tables.js';
 
 let supabase;
 try {
@@ -21,8 +20,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    await ensureTables();
-    
     // Validate required environment variables
     if (!process.env.WHOP_API_KEY || !process.env.WHOP_APP_ID || !process.env.WHOP_REDIRECT_URI || !process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
       return res.status(500).json({ error: 'Missing required environment variables' });

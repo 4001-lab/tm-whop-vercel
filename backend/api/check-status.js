@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js';
-import { ensureTables } from '../lib/ensure-tables.js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -10,8 +9,6 @@ export default async function handler(req, res) {
   const sessionId = req.headers['x-session-id'] || req.ip || req.headers['x-forwarded-for'] || 'default';
   
   if (req.method === 'GET') {
-    await ensureTables();
-    
     // Clean up expired sessions
     await supabase
       .from('auth_sessions')

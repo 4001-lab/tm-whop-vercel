@@ -1,7 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { WhopServerSdk } from '@whop/api';
 import { createClient } from '@supabase/supabase-js';
-import { ensureTables } from '../../lib/ensure-tables.js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -27,8 +26,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    await ensureTables();
-    
     // Verify state parameter
     const { data: stateData, error: stateError } = await supabase
       .from('auth_sessions')
